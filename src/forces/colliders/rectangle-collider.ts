@@ -39,42 +39,39 @@ export function rectangleCollider() {
           const quadNode = quadNext.data;
           // Check if the quadData is not the current node to avoid self-collision.
           if (quadNode !== node) {
-            // Calculate the half dimensions and bounding box for the quadData node.
+            // Calculate the half dimensions for the quadNode.
             const w2 = quadNode.width / 2;
             const h2 = quadNode.height / 2;
 
-            const mx1 = quadNode.x - w2;
-            const mx2 = quadNode.x + w2;
-            const my1 = quadNode.y - h2;
-            const my2 = quadNode.y + h2;
+            // Vector from node to quadNode
+            const dx = quadNode.x - node.x;
+            const dy = quadNode.y - node.y;
 
-            // Determine if there is overlap between the current node and quadData node.
-            const hasOverlapX = nx1 < mx2 && nx2 > mx1;
-            const hasOverlapY = ny1 < my2 && ny2 > my1;
+            // Minimum non-overlapping distances along x and y axes for rectangles
+            const minDistX = w + w2;
+            const minDistY = h + h2;
 
-            // Calculate the center distance between nodes on both axes.
-            const dx = (nx1 + nx2) / 2 - (mx1 + mx2) / 2;
-            const dy = (ny1 + ny2) / 2 - (my1 + my2) / 2;
+            // Actual distance between node centers
+            const distX = Math.abs(dx);
+            const distY = Math.abs(dy);
 
-            // Calculate the overlap amount on both axes.
-            const overlapX = w + w2 - Math.abs(dx);
-            const overlapY = h + h2 - Math.abs(dy);
+            // Calculate overlap depth along both axes
+            const overlapX = minDistX - distX;
+            const overlapY = minDistY - distY;
 
-            // If there is overlap, calculate the necessary displacement to resolve the collision.
-            if (hasOverlapX && hasOverlapY) {
-              const displacementX = Math.sign(dx) * overlapX;
-              const displacementY = Math.sign(dy) * overlapY;
+            if (overlapX > 0 && overlapY > 0) {
+              // Calculate x-y displacement fractions (keep only the min-overlap axis)
+              const fracX = Math.sign(dx) * Number(overlapX < overlapY);
+              const fracY = Math.sign(dy) * Number(overlapY <= overlapX);
 
-              // Resolve the collision along the axis of least overlap.
-              if (overlapX < overlapY) {
-                // Adjust positions along the x-axis.
-                node.x += displacementX * hardAlpha;
-                quadNode.x -= displacementX * hardAlpha;
-              } else {
-                // Adjust positions along the y-axis.
-                node.y += displacementY * hardAlpha;
-                quadNode.y -= displacementY * hardAlpha;
-              }
+              // Apply displacement proportional to overlap and adjusted by hardAlpha
+              const displacementX = fracX * overlapX * hardAlpha;
+              const displacementY = fracY * overlapY * hardAlpha;
+
+              node.x -= displacementX;
+              node.y -= displacementY;
+              quadNode.x += displacementX;
+              quadNode.y += displacementY;
             }
           }
 

@@ -39,37 +39,39 @@ export function ellipseCollider() {
             const h2 = quadNode.height / 2;
 
             // Vector from node to other
-            let dx = quadNode.x - node.x;
-            let dy = quadNode.y - node.y;
+            const dx = quadNode.x - node.x;
+            const dy = quadNode.y - node.y;
 
             // Estimate minimum non-overlapping distance between ellipses
             const angle = Math.atan2(dy, dx);
             const cos = Math.cos(angle);
             const sin = Math.sin(angle);
-
             // Adjusted radii considering the angle between ellipses
-            const r1 = (w * h) / Math.hypot(h * cos, w * sin);
+            const r = (w * h) / Math.hypot(h * cos, w * sin);
             const r2 = (w2 * h2) / Math.hypot(h2 * cos, w2 * sin);
-            const minDist = r1 + r2;
+            const minDist = r + r2;
 
+            // Actual distance between node centers
             const dist = Math.hypot(dx, dy);
 
-            // Check for overlap and calculate overlap depth
-            if (dist < minDist) {
-              const overlap = minDist - dist;
+            // Calculate overlap depth
+            const overlap = minDist - dist;
 
-              // Normalize direction vector
-              dx /= dist;
-              dy /= dist;
+            // Check for overlap and calculate overlap depth
+            if (overlap > 0) {
+              // Calculate x-y displacement fractions
+              // NOTE: this gives a circle-like displacement force
+              const fracX = dx / dist;
+              const fracY = dy / dist;
 
               // Apply displacement proportional to overlap and adjusted by hardAlpha
-              const displacementX = dx * overlap * hardAlpha;
-              const displacementY = dy * overlap * hardAlpha;
+              const displacementX = fracX * overlap * hardAlpha;
+              const displacementY = fracY * overlap * hardAlpha;
 
               node.x -= displacementX;
               node.y -= displacementY;
-              quad.data.x += displacementX;
-              quad.data.y += displacementY;
+              quadNode.x += displacementX;
+              quadNode.y += displacementY;
             }
           }
 

@@ -33,20 +33,35 @@ export function circleCollider() {
           const quadNode = quadNext.data;
           // Check if the quadData is not the current node to avoid self-collision.
           if (quadNode !== node) {
-            // Calculate the combined radii and distance between nodes to check for overlap.
-            const r = node.width / 2 + quadNode.width / 2;
-            let x = node.x - quadNode.x;
-            let y = node.y - quadNode.y;
-            // Compute the Euclidean distance between nodes.
-            let l = Math.hypot(x, y);
+            const r2 = Math.max(quadNode.width, quadNode.height) / 2;
 
-            // If nodes are overlapping, adjust their positions to resolve the collision.
-            if (l < r) {
-              l = ((l - r) / l) * hardAlpha; // Calculate the adjustment factor.
-              node.x -= x *= l; // Adjust this node's position.
-              node.y -= y *= l;
-              quadNode.x += x; // Adjust the other node's position.
-              quadNode.y += y;
+            // Vector from node to quadNode
+            const dx = quadNode.x - node.x;
+            const dy = quadNode.y - node.y;
+
+            // Combined radii as the minimum non-overlapping distance between circles
+            const minDist = r + r2;
+
+            // Actual distance between node centers
+            const dist = Math.hypot(dx, dy);
+
+            // Calculate overlap depth
+            const overlap = minDist - dist;
+
+            // Check for overlap and calculate overlap depth
+            if (overlap > 0) {
+              // Calculate x-y displacement fractions for a circle-like displacement force
+              const fracX = dx / dist;
+              const fracY = dy / dist;
+
+              // Apply displacement proportional to overlap and adjusted by hardAlpha
+              const displacementX = fracX * overlap * hardAlpha;
+              const displacementY = fracY * overlap * hardAlpha;
+
+              node.x -= displacementX;
+              node.y -= displacementY;
+              quadNode.x += displacementX;
+              quadNode.y += displacementY;
             }
           }
           quadNext = quadNext?.next; // Move to the next node in the quadtree.
